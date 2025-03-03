@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    
+    <PackageReference Include="ClosedXML" Version="0.105.0-rc" />
+    
+    <PackageReference Include="EPPlus" Version="7.6.0" />
+    
+    <PackageReference Include="MD.PersianDateTime" Version="4.5.0" />
+    
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+    
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.13" />
+    
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.3.0" />
+    
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.6.0" />
+    
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    
+    <PackageReference Include="PayamakPanel.Core" Version="2.0.0" />
+    
+    <PackageReference Include="RestSharp" Version="112.1.0" />
+    
+    <PackageReference Include="System.Data.OleDb" Version="9.0.2" />
+  </ItemGroup>
+
+</Project>
