@@ -210,33 +210,33 @@ namespace GeneralService
             }
         }
 
-        public static WorkRange[] GetWorkRanges(this GeneralServices.Calendars.PersianCalendar calendar, PersianDayOfWeek day)
-        {
-            var result = new List<WorkRange>();
+        //public static WorkRange[] GetWorkRanges(this GeneralServices.Calendars.PersianCalendar calendar, PersianDayOfWeek day)
+        //{
+        //    var result = new List<WorkRange>();
 
-            for (byte i = 1; i <= 3; i++)
-            {
-                var s = calendar.GetDayShiftStart(day, i).ConvertStringTimeToTimeSpan();
-                var f = calendar.GetDayShiftFinish(day, i).ConvertStringTimeToTimeSpan();
+        //    for (byte i = 1; i <= 3; i++)
+        //    {
+        //        var s = calendar.GetDayShiftStart(day, i).ConvertStringTimeToTimeSpan();
+        //        var f = calendar.GetDayShiftFinish(day, i).ConvertStringTimeToTimeSpan();
 
-                if ((f - s).TotalMinutes > 0)
-                {
-                    result.Add(new WorkRange()
-                    {
-                        Start = s,
-                        Finish = f,
-                        Duration = (int)(f - s).TotalMinutes
-                    });
-                }
-            }
+        //        if ((f - s).TotalMinutes > 0)
+        //        {
+        //            result.Add(new WorkRange()
+        //            {
+        //                Start = s,
+        //                Finish = f,
+        //                Duration = (int)(f - s).TotalMinutes
+        //            });
+        //        }
+        //    }
 
-            return result.ToArray();
-        }
+        //    return result.ToArray();
+        //}
 
-        public static int MinutesPastFromDay(this WorkRange[] workRanges, PersianDateTime date)
+        public static uint MinutesPassedFromThisDay(this WorkTimeRange[] workRanges, PersianDateTime date)
         {
             var dSpan = new TimeSpan(date.Hour, date.Minute, 0);
-            int result = 0;
+            uint result = 0;
 
             foreach (var workRange in workRanges)
             {
@@ -246,7 +246,7 @@ namespace GeneralService
                 }
                 else if (dSpan >= workRange.Start & dSpan <= workRange.Finish)
                 {
-                    result += (int)(dSpan - workRange.Start).TotalMinutes;
+                    result += (uint)(dSpan - workRange.Start).TotalMinutes;
                     break;
                 }
                 else
@@ -258,38 +258,13 @@ namespace GeneralService
             return result;
         }
 
-        public static double HoursPastFromDay(this WorkRange[] workRanges, PersianDateTime date)
+        public static double HoursPassedFromDay(this WorkTimeRange[] workRanges, PersianDateTime date)
         {
-            return MinutesPastFromDay(workRanges, date) / 60;
+            return (double) MinutesPassedFromThisDay(workRanges, date) / 60;
         }
 
-        public static PersianDateTime GetTimePastedInDay(this WorkRange[] workRanges, int year, int month, int day, double hours)
-        {
-            int past = (int)(hours * 60);
+       
 
-            var result = new PersianDateTime(year, month, day);
-
-            foreach (var workRange in workRanges)
-            {
-                if (past > workRange.Duration)
-                {
-                    past -= workRange.Duration;
-                    continue;
-                }
-
-                var timeSpan = workRange.Start.Add(new TimeSpan(0, past, 0));
-
-                result = result.Add(timeSpan);
-                break;
-            }
-
-            return result;
-        }
-
-        public static PersianDateTime GetTimePastedInDay(this WorkRange[] workRanges, PersianDateTime date, double hours)
-        {
-            return workRanges.GetTimePastedInDay(date.Year, date.Month, date.Day, hours);
-        }
 
         public static bool IsInRange(this string date, string start, string finish = null,
             bool startDay = true, bool finishDay = true)

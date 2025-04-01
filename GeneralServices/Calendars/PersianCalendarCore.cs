@@ -3,369 +3,120 @@ using System.Collections.Generic;
 using System.Linq;
 using GeneralService;
 using MD.PersianDateTime;
+using TimeSpan = System.TimeSpan;
 
 namespace GeneralServices.Calendars
 {
-    public class WorkRange
+    public class CalendarDayRange
     {
-        public TimeSpan Start;
-        public TimeSpan Finish;
-        public int Duration;
-    }
+        private uint _start;
+        private uint _finish;
+        private ushort _duration;
 
-    public class HolidayTime
-    {
-        public int Date;
-        public int Duration;
+        public CalendarDayRange(uint startValue, ushort duration, byte durationPercentage = 100)
+        {
+            _start = startValue;
+            duration = (ushort)(duration * durationPercentage * 0.01);
+
+            _finish = startValue + duration;
+            _duration = duration;
+        }
+
+
+        public uint ValueOnStart => _start;
+        public uint ValueOnFinish => _finish;
+        public ushort Duration => _duration;
+
+        public void Move(uint value)
+        {
+            _start += value;
+            _finish += value;
+        }
+    
     }
 
     public class PersianCalendarCore
     {
-        private readonly Dictionary<PersianDayOfWeek, WorkRange[]> _dayWeekRanges;
-        private readonly PersianCalendar _calendar;
-        private readonly List<HolidayTime> _holidayTimes;
-        private readonly int _totalWeekTime;
+        private PersianCalendarDistribution _calendarDistribution;
 
-
-        public PersianCalendarCore(PersianCalendar calendar, List<CalendarHolidayViewModel> calendarHolidays)
+        public PersianCalendarCore(PersianCalendarDistribution calendarDistribution)
         {
-            _calendar = calendar;
-
-            _dayWeekRanges = new Dictionary<PersianDayOfWeek, WorkRange[]>();
-
-            _totalWeekTime = 0;
-
-            for (int i = 0; i < 7; i++)
-            {
-                var dw = (PersianDayOfWeek)i;
-                var ldw = calendar.GetWorkRanges(dw);
-                _dayWeekRanges.Add(dw, ldw);
-
-                _totalWeekTime += ldw.Sum(a => a.Duration);
-            }
-
-            _holidayTimes = new List<HolidayTime>();
-
-            foreach (var calendarHoliday in calendarHolidays)
-            {
-                var start = calendarHoliday.StartHoliday;
-                var finish = calendarHoliday.FinishHoliday;
-
-                PersianDateTime tDate = start;
-
-                do
-                {
-                    var d = _dayWeekRanges[tDate.PersianDayOfWeek];
-
-                    _holidayTimes.Add(new HolidayTime()
-                    {
-                        Date = tDate.ToShortDateInt(),
-                        Duration = d.Sum(r => r.Duration)
-                    });
-
-                    tDate = tDate.AddDays(1);
-
-                } while (tDate <= finish);
-            }
+            _calendarDistribution = calendarDistribution;
         }
 
-        public int Duration(PersianDateTime start, PersianDateTime finish)
+        //Duration by minutes
+        public uint Duration(string start, string finish)
         {
-            if (start.Year != finish.Year)
-            {
-                int result = 0;
+            return Duration(start.ToPersianDateTime(), finish.ToPersianDateTime());
+        }
 
-                PersianDateTime tDate = start;
+        public uint Duration(PersianDateTime start, PersianDateTime finish)
+        {
+            start = _calendarDistribution.CheckExtendAndSet(start);
 
-                do
-                {
-                    if (tDate.Year < finish.Year)
-                    {
-                        result += RemainOfYear(tDate);
-                    }
-                    else
-                    {
-                        result += PastFromYear(finish);
-                    }
+            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish,false);
+            finish = _calendarDistribution.CheckExtendAndSet(finish);
 
-                    tDate = new PersianDateTime(tDate.Year + 1, 1, 1);
+            
 
-                } while (tDate.Year <= finish.Year);
+            int startInt = start.ToShortDateInt();
+            int finishInt = finish.ToShortDateInt();
 
-                return result;
-            }
-            else
-            {
-                if (finish.GetWeekOfYear == start.GetWeekOfYear)
-                {
-                    return PastFromWeek(finish) - PastFromWeek(start);
-                }
+            var startOfStart = _calendarDistribution[startInt].ValueOnStart;
+            var startOfFinish = _calendarDistribution[finishInt].ValueOnStart;
 
-                return PastFromYear(finish) - PastFromYear(start);
-            }
+            return startOfFinish - startOfStart + MinutesPassedFromThisDay(finish) - MinutesPassedFromThisDay(start);
         }
 
         public double DurationByHour(PersianDateTime start, PersianDateTime finish)
         {
-            return Duration(start, finish) / 60;
+            return (double)Duration(start, finish) / 60;
         }
-
-        public double InDayDurationByHour(PersianDateTime date)
-        {
-            if (_holidayTimes.Any(h => h.Date == date.ToShortDateInt())) return 0;
-
-            var ranges = _dayWeekRanges[date.PersianDayOfWeek];
-
-            return (ranges.Sum(r => r.Duration) / 60);
-        }
-
-        private int PastFromYear(PersianDateTime date)
-        {
-            var yearStartDate = new PersianDateTime(date.Year, 1, 1, 0, 0, 0);
-
-            int result = 0;
-
-            //تاریخ در اولین هفته سال می باشد
-            if (date.GetWeekOfYear == yearStartDate.GetWeekOfYear) return PastFromWeek(date);
-
-            //اضافه کردن زمان در همین هفته
-            result += PastFromWeek(date);
-
-            //اضافه کردن زمان در اولین هفته سال
-            result += RemainOfWeek(yearStartDate);
-
-            //اضافه کردن زمان هفته های مابین 
-            var prevWeekFinishDate = date.AddDays(-7).FinishWeekDate();
-            var secondWeekStartDate = yearStartDate.AddDays(7).StartWeekDate();
-
-            result += (prevWeekFinishDate.GetWeekOfYear - yearStartDate.GetWeekOfYear) * _totalWeekTime;
-
-            //کسر زمان تعطیلات از کل
-            var holidays = _holidayTimes.Where(h => h.Date >= secondWeekStartDate.ToShortDateInt() & h.Date <= prevWeekFinishDate.ToShortDateInt()).ToList();
-            result -= holidays.Sum(a => a.Duration);
-
-            return result;
-        }
-
-        private int RemainOfYear(PersianDateTime date)
-        {
-            var yearEndDate = new PersianDateTime(date.Year, 12, 1, 23, 59, 59);
-            yearEndDate = yearEndDate.AddDays(yearEndDate.GetMonthDays - 1);
-
-            int result = 0;
-
-            //تاریخ در آخرین هفته سال می باشد
-            if (date.GetWeekOfYear == yearEndDate.GetWeekOfYear) return RemainOfWeek(date);
-
-            //اضافه کردن زمان باقیمانده تا آخر همین هفته
-            result += RemainOfWeek(date);
-
-            //اضافه کردن زمان گذشته در هفته آخر سال
-            result += PastFromWeek(yearEndDate);
-
-            //اضافه کردن زمان هفته های مابین 
-            var nextWeekStartDate = date.AddDays(7).StartWeekDate();
-            var preLastWeekFinishDate = yearEndDate.AddDays(-7).FinishWeekDate();
-
-            result += (yearEndDate.GetWeekOfYear - nextWeekStartDate.GetWeekOfYear) * _totalWeekTime;
-
-            //کسر زمان تعطیلات از کل
-            var holidays = _holidayTimes.Where(h => h.Date >= nextWeekStartDate.ToShortDateInt() & h.Date <= preLastWeekFinishDate.ToShortDateInt()).ToList();
-            result -= holidays.Sum(a => a.Duration);
-
-            return result;
-        }
-
-        
-
-        private int PastFromWeek(PersianDateTime date)
-        {
-            int result = 0;
-            var tDate = date.StartWeekDate();
-
-            do
-            {
-                if (_holidayTimes.All(h => h.Date != tDate.ToShortDateInt()))
-                {
-                    if (tDate.ToShortDateInt() < date.ToShortDateInt())
-                    {
-                        result += _dayWeekRanges[tDate.PersianDayOfWeek].Sum(a => a.Duration);
-                    }
-                    else
-                    {
-                        result += PastFromDay(date);
-                        break;
-                    }
-                }
-
-                tDate = tDate.AddDays(1);
-
-            } while (tDate <= date);
-
-            return result;
-        }
-        private int RemainOfWeek(PersianDateTime date)
-        {
-            int result = 0;
-            var tDate = date;
-            var fDate = date.FinishWeekDate();
-
-            do
-            {
-                if (_holidayTimes.All(h => h.Date != tDate.ToShortDateInt()))
-                {
-                    if (tDate.ToShortDateInt() == date.ToShortDateInt())
-                    {
-                        result += PastFromDay(tDate);
-                    }
-                    else
-                    {
-                        result += _dayWeekRanges[tDate.PersianDayOfWeek].Sum(a => a.Duration);
-                    }
-                }
-
-                tDate = tDate.AddDays(1);
-
-            } while (tDate <= fDate);
-
-            return result;
-        }
-
 
         public decimal Progress(PersianDateTime tDate, PersianDateTime start, PersianDateTime finish)
         {
             if (start > finish) return -1;
 
+            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish,false);
+
             if (tDate < start) return 0;
             if (tDate > finish) return 100;
             if (start == finish) return 100;
 
-            double total = (finish - start).TotalDays;
-            double past = (tDate - start).TotalDays;
+            uint total = Duration(start, finish);
+            uint past = Duration(start, tDate);
 
             if (total == 0) return 100;
 
-            return Math.Round((decimal)(100 * past / total), 2);
+            return Math.Round((100 * (decimal)past / (decimal)total), 2);
 
         }
 
-        
-
-        public int GetDurationDays(PersianDateTime start, PersianDateTime finish)
+        public int DurationDays(PersianDateTime start, PersianDateTime finish)
         {
-            var days = (int)(finish - start).TotalDays + 1;
-
-            var holidays = _holidayTimes.Where(h => h.Date >= start.ToShortDateInt() & h.Date <= finish.ToShortDateInt())?.Count() ?? 0;
-
-            return days - holidays;
+            return (int)(finish - start).TotalDays + 1 - _calendarDistribution.CountHolidaysInRange(start, finish);
         }
 
-        public PersianDateTime AddHours(PersianDateTime time, double hours)
+        private uint MinutesPassedFromThisDay(PersianDateTime date)
         {
-            return AddMinutes(time,(int) (hours * 60));
+            if (_calendarDistribution.IsHoliday(date)) return 0;
+            return _calendarDistribution.WorkTimeRanges(date.PersianDayOfWeek).MinutesPassedFromThisDay(date);
         }
 
-        public PersianDateTime AddMinutes(PersianDateTime time, int minutes)
+        public PersianDateTime AddDays(string start, int days) => AddDays(start.ToPersianDateTime(), days);
+        public PersianDateTime AddDays(PersianDateTime start, int days)
         {
             try
             {
-                PersianDateTime tTime = time;
-
-                int past = 0, totalDay = 0;
-
-                if (minutes == 0) return time;
-
-                if (minutes > 0)
-                {
-                    do
-                    {
-                        past = PastFromDay(tTime);
-
-                        if (_holidayTimes.All(h => h.Date != time.ToShortDateInt()))
-                        {
-                            totalDay = _dayWeekRanges[tTime.PersianDayOfWeek].Sum(a => a.Duration);
-
-                            if (past + minutes > totalDay)
-                            {
-                                minutes -= totalDay - past;
-                            }
-                            else
-                            {
-                                return new PersianDateTime(tTime.Year, tTime.Month, tTime.Day).Add(
-                                    GetTimeInDay(tTime.PersianDayOfWeek,(int) past + minutes));
-                            }
-                        }
-
-                        tTime = ExactWorkStartTime(tTime.StartOfTomorrow());
-
-                    } while (minutes >= 0);
-                }
-                else
-                {
-                    minutes = Math.Abs(minutes);
-
-                    do
-                    {
-                        past = PastFromDay(tTime);
-
-                        if (_holidayTimes.All(h => h.Date != time.ToShortDateInt()))
-                        {
-                            if (minutes > past)
-                            {
-                                minutes -= past;
-                            }
-                            else
-                            {
-                                return new PersianDateTime(tTime.Year, tTime.Month, tTime.Day).Add(
-                                    GetTimeInDay(tTime.PersianDayOfWeek, past - minutes));
-                            }
-                        }
-
-                        tTime = ExactWorkFinishTime(tTime.StartOfYesterday());
-
-                    } while (minutes >= 0);
-                }
-
-                return time;
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
-        }
-
-        private int PastFromDay(PersianDateTime tTime)
-        {
-            return _dayWeekRanges[tTime.PersianDayOfWeek].MinutesPastFromDay(tTime);
-        }
-
-        public PersianDateTime AddDays(PersianDateTime time, int days)
-        {
-            try
-            {
-                PersianDateTime tTime = time;
-
-                int past = 0;
-
-                if (days == 0) return time;
-
-                int direction = Math.Abs(days) / days;
-
-                days = Math.Abs(days);
+                var tDate = start;
 
                 do
                 {
-                    if (_holidayTimes.All(h => h.Date != time.ToShortDateInt()))
-                    {
-                        past++;
-                    }
+                    if (_calendarDistribution[tDate.ToShortDateInt()].Duration > 0) days--;
+                    tDate = tDate.AddDays(1);
+                } while (days > 0);
 
-                    time = time.AddDays(direction);
-
-                } while (past < days);
-
-
-                return time;
+                return ExactWorkStartTime(tDate);
             }
             catch (Exception e)
             {
@@ -373,149 +124,95 @@ namespace GeneralServices.Calendars
             }
         }
 
+        public PersianDateTime ExactWorkStartTime(string time) => ExactWorkStartTime(time.ToPersianDateTime());
         public PersianDateTime ExactWorkStartTime(PersianDateTime time)
         {
-            var tTimeSpan = new TimeSpan(time.Hour, time.Minute, 0);
-
-            int searchDays = 0;
-
-        GetRange:
-            var ranges = _dayWeekRanges[time.PersianDayOfWeek];
-
-            foreach (var workRange in ranges)
-            {
-                if (tTimeSpan < workRange.Start)
-                {
-                    return time.GetTimeSpanForThisDate(workRange.Start);
-                }
-                else if (tTimeSpan >= workRange.Start & tTimeSpan <= workRange.Finish)
-                {
-                    return time;
-                }
-            }
-
-            searchDays++;
-
-            if (searchDays >= 7) return time;
-
-            tTimeSpan = new TimeSpan(0, 0, 0);
-            time = time.StartOfTomorrow();
-
-            goto GetRange;
+            return AddMinutes(time, 0);
         }
 
-        public PersianDateTime ExactWorkFinishTime(PersianDateTime date)
+        public PersianDateTime ExactWorkFinishTime(string date, bool forwardAvailable = true) => ExactWorkFinishTime(date.ToPersianDateTime(),forwardAvailable);
+        public PersianDateTime ExactWorkFinishTime(PersianDateTime date,bool forwardAvailable = true)
         {
-            var ranges = _dayWeekRanges[date.PersianDayOfWeek].OrderByDescending(r => r.Finish).ToList();
+            var thisDayDuration = (uint)_calendarDistribution[date.ToShortDateInt()].Duration;
 
-            var firstOfDay = new PersianDateTime(date.Year, date.Month, date.Day);
+            PersianDateTime exactStart;
 
-            if (ranges.Count > 0)
+            if (forwardAvailable)
             {
-                return firstOfDay.Add(ranges.First().Finish);
+                exactStart = ExactWorkStartTime(date);
             }
             else
             {
-                return firstOfDay;
-            }
-        }
+                var tDate = date;
 
-        private TimeSpan GetTimeInDay(PersianDayOfWeek dayOfWeek, int minutes)
-        {
-            var ranges = _dayWeekRanges[dayOfWeek];
+                while (tDate.ToShortDateInt() > _calendarDistribution.StartDateTime.ToShortDateInt()
+                       & _calendarDistribution[tDate.ToShortDateInt()].Duration == 0)
+                {
+                    tDate = tDate.AddDays(-1);
+                }
 
-            foreach (var workRange in ranges)
-            {
-                if (minutes <= workRange.Duration)
-                {
-                    return workRange.Start.Add(new TimeSpan(0, minutes, 0));
-                }
-                else
-                {
-                    minutes -= workRange.Duration;
-                }
+                thisDayDuration = (uint)_calendarDistribution[tDate.ToShortDateInt()].Duration;
+                exactStart = ExactWorkStartTime(tDate);
             }
 
-            return new TimeSpan(0);
+            var passed = MinutesPassedFromThisDay(exactStart);
+
+            return AddMinutes(exactStart, thisDayDuration - passed);
+
         }
 
-        public PersianDateTime GetTimeInDayForStart(PersianDateTime time)
-        {
-            var minutes = PastFromDay(time);
-
-        GetDate:
-
-            if (_holidayTimes.All(h => h.Date == time.ToShortDateInt()))
-            {
-                var ranges = _dayWeekRanges[time.PersianDayOfWeek];
-
-                foreach (var workRange in ranges)
-                {
-                    if (minutes < workRange.Duration)
-                    {
-                        return new PersianDateTime(time.Year, time.Month, time.Day).Add(
-                            workRange.Start.Add(new TimeSpan(0, minutes, 0)));
-                    }
-                    else
-                    {
-                        minutes -= workRange.Duration;
-                    }
-                }
-            }
-
-            time = time.StartOfTomorrow();
-            goto GetDate;
-        }
-
+        public PersianDateTime EarnDate(decimal progress, string start, string finish) =>
+            EarnDate(progress, start.ToPersianDateTime(), finish.ToPersianDateTime());
         public PersianDateTime EarnDate(decimal progress, PersianDateTime start,
             PersianDateTime finish)
         {
-            try
+            if (start > finish) return finish;
+            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish,false);
+            if (progress == 0) return ExactWorkStartTime(start);
+            if (progress == 100) return finish;
+            if (start == finish) return ExactWorkStartTime(start);
+
+            uint totalTime = Duration(start, finish);
+            uint progressValueTime = (uint)(totalTime * progress / 100);
+
+            return AddMinutes(start, progressValueTime);
+        }
+
+        public PersianDateTime AddHours(string date, double hours) => AddHours(date.ToPersianDateTime(), hours);
+        public PersianDateTime AddHours(PersianDateTime date, double hours)
+        {
+            return AddMinutes(date, (uint)(hours * 60));
+        }
+
+        public PersianDateTime AddMinutes(string date, uint minutes) => AddMinutes(date.ToPersianDateTime(), minutes);
+        public PersianDateTime AddMinutes(PersianDateTime date, uint minutes)
+        {
+            uint remainPassed = minutes + MinutesPassedFromThisDay(date);
+            PersianDateTime tDate = date;
+
+            while (_calendarDistribution[tDate.ToShortDateInt()].Duration < remainPassed | _calendarDistribution[tDate.ToShortDateInt()].Duration == 0)
             {
-                if (start > finish) return finish;
+                remainPassed -= (uint) _calendarDistribution[tDate.ToShortDateInt()].Duration;
+                tDate = tDate.AddDays(1);
+            }
 
-                if (progress == 0) return start;
-                if (progress == 100) return finish;
-                if (start == finish) return start;
+            var result = tDate.StartOfDay();
 
-                int totalTime = (int)(finish - start).TotalDays;
-                int passedTime = 0, progressTime = (int)(progress * totalTime / 100);
-
-                PersianDateTime tTime = start;
-                int remainFromDay = 0;
-
-                do
+            foreach (var workRange in _calendarDistribution.WorkTimeRanges(tDate.PersianDayOfWeek))
+            {
+                if (remainPassed > workRange.Duration)
                 {
-                    if (_holidayTimes.All(h => h.Date != tTime.ToShortDateInt()))
-                    {
-                        if (tTime.ToShortDateInt() == start.ToShortDateInt())
-                        {
-                            remainFromDay = _dayWeekRanges[tTime.PersianDayOfWeek].Sum(d => d.Duration) - PastFromDay(tTime);
-                        }
-                        else
-                        {
-                            remainFromDay = _dayWeekRanges[tTime.PersianDayOfWeek].Sum(d => d.Duration);
-                        }
+                    remainPassed -= (uint) workRange.Duration;
+                    continue;
+                }
 
-                        if (passedTime + remainFromDay > progressTime)
-                        {
-                            return AddMinutes(tTime, progressTime - passedTime);
-                        }
+                var timeSpan = workRange.Start.Add(new TimeSpan(0, (int) remainPassed, 0));
 
-                        passedTime += remainFromDay;
-                        remainFromDay = 0;
-                    }
-
-                    tTime = ExactWorkStartTime(tTime.Add(new TimeSpan(1, -tTime.Hour, -tTime.Minute, -tTime.Second)));
-
-                } while (passedTime < progressTime);
-
-                return finish;
+                result = result.Add(timeSpan);
+                break;
             }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+
+            return result;
         }
 
 

@@ -4,7 +4,7 @@ using GeneralServices.Models;
 
 namespace GeneralServices.Calendars
 {
-    public class PersianCalendarHoliday:ICacheModel
+    public class PersianCalendarHoliday
     {
         [Key]
         public int Id { get; set; }
@@ -19,7 +19,5 @@ namespace GeneralServices.Calendars
 
         [MaxLength(10)]
         public string FinishHolidayDate { get; set; }
-
-        public string[] DefaultCacheNames() => new[] { ICacheModel.CreateCacheName(nameof(PersianCalendarHoliday),CalendarId)};
     }
 }

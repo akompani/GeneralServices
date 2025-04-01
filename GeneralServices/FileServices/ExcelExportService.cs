@@ -147,26 +147,26 @@ namespace GeneralServices.FileServices
 
 
             //Coef Cells --------------------------------------------------------------------------
-            var coefCell = XLWorkbook.DefaultStyle;
-            coefCell.Font.FontName = "B Mitra";
-            coefCell.Font.FontCharSet = XLFontCharSet.Arabic;
-            coefCell.Font.FontSize = 14;
-            coefCell.Font.Bold = true;
-            coefCell.NumberFormat.SetFormat("0.0######");
+            var factorCell = XLWorkbook.DefaultStyle;
+            factorCell.Font.FontName = "B Mitra";
+            factorCell.Font.FontCharSet = XLFontCharSet.Arabic;
+            factorCell.Font.FontSize = 14;
+            factorCell.Font.Bold = true;
+            factorCell.NumberFormat.SetFormat("0.0######");
 
-            coefCell.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            coefCell.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-            coefCell.Alignment.WrapText = true;
+            factorCell.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            factorCell.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            factorCell.Alignment.WrapText = true;
 
-            coefCell.Border.BottomBorder = XLBorderStyleValues.Thin;
-            coefCell.Border.TopBorder = XLBorderStyleValues.Thin;
-            coefCell.Border.LeftBorder = XLBorderStyleValues.Thin;
-            coefCell.Border.RightBorder = XLBorderStyleValues.Thin;
+            factorCell.Border.BottomBorder = XLBorderStyleValues.Thin;
+            factorCell.Border.TopBorder = XLBorderStyleValues.Thin;
+            factorCell.Border.LeftBorder = XLBorderStyleValues.Thin;
+            factorCell.Border.RightBorder = XLBorderStyleValues.Thin;
 
-            coefCell.Fill.PatternType = XLFillPatternValues.Solid;
-            coefCell.Fill.BackgroundColor = XLColor.LightGray;
+            factorCell.Fill.PatternType = XLFillPatternValues.Solid;
+            factorCell.Fill.BackgroundColor = XLColor.LightGray;
 
-            _styles.Add("COEFCELL", coefCell);
+            _styles.Add("FACTORCELL", factorCell);
         }
 
         public void SetColumnWidths(IXLWorksheet setSheet, List<double> colWidths)
@@ -202,7 +202,7 @@ namespace GeneralServices.FileServices
             }
             else
             {
-                range.Value = (XLCellValue)value;
+                range.Value = value?.ToString() ?? "";
             }
 
             if (backgroundColor != null) range.Style.Fill.BackgroundColor = backgroundColor;
@@ -258,7 +258,7 @@ namespace GeneralServices.FileServices
 
             foreach (var c in sheetName)
             {
-                if (!char.IsWhiteSpace(c) && !char.IsLetterOrDigit(c)) result += c;
+                if (!char.IsWhiteSpace(c) && char.IsLetterOrDigit(c)) result += c;
             }
 
             return result;

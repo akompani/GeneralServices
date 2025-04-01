@@ -54,8 +54,8 @@ namespace GeneralServices.Models
                 doFinish = auditStart;
                 doStart = calendarCore.ExactWorkStartTime(calendarCore.AddHours(doFinish, -model.DoDurationHours));
 
-                model.DoDurationDays = calendarCore.GetDurationDays(doStart, doFinish);
-                model.AuditDurationDays = calendarCore.GetDurationDays(auditStart, auditFinish);
+                model.DoDurationDays = calendarCore.DurationDays(doStart, doFinish);
+                model.AuditDurationDays = calendarCore.DurationDays(auditStart, auditFinish);
             }
             else
             {
@@ -69,7 +69,7 @@ namespace GeneralServices.Models
                     else
                     {
                         doFinish = calendarCore.AddHours(doStart, model.DoDurationHours);
-                        model.DoDurationDays = calendarCore.GetDurationDays(doStart, doFinish);
+                        model.DoDurationDays = calendarCore.DurationDays(doStart, doFinish);
                     }
 
 
@@ -78,7 +78,7 @@ namespace GeneralServices.Models
                     if (changeMode == "DODURATIONDAYS")
                     {
                         auditFinish = calendarCore.AddHours(auditStart, model.AuditDurationHours);
-                        model.AuditDurationDays = calendarCore.GetDurationDays(auditStart, auditFinish);
+                        model.AuditDurationDays = calendarCore.DurationDays(auditStart, auditFinish);
                     }
                     else
                     {
@@ -90,12 +90,12 @@ namespace GeneralServices.Models
                 else
                 {
                     doFinish = calendarCore.AddHours(doStart, model.DoDurationHours);
-                    model.DoDurationDays = calendarCore.GetDurationDays(doStart, doFinish);
+                    model.DoDurationDays = calendarCore.DurationDays(doStart, doFinish);
 
                     auditStart = calendarCore.ExactWorkStartTime(doFinish);
 
                     auditFinish = calendarCore.AddHours(auditStart, model.AuditDurationHours);
-                    model.AuditDurationDays = calendarCore.GetDurationDays(auditStart, auditFinish);
+                    model.AuditDurationDays = calendarCore.DurationDays(auditStart, auditFinish);
                 }
             }
 

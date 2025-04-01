@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\ICacheModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     
     <PackageReference Include="ClosedXML" Version="0.105.0-rc" />
     

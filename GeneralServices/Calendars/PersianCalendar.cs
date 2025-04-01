@@ -1,12 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using DocumentFormat.OpenXml.Bibliography;
 using GeneralServices.Models;
 using MD.PersianDateTime;
 
 namespace GeneralServices.Calendars
 {
-    public class PersianCalendar:ICacheModel
+    public class PersianCalendar
     {
+        // 8:00 to 12:00 and 13:00 to 17:00
+        private const string DefaultTime = "8:00-12:00,13:00-17:00";
+
         [Key]
         public int Id { get; set; }
 
@@ -15,81 +21,56 @@ namespace GeneralServices.Calendars
         public string Name { get; set; }
 
         public bool Saturday { get; set; } = true;
-
-        [MaxLength(5)] public string SaturdayStart1 { get; set; } = "8:00";
-        [MaxLength(5)] public string SaturdayStart2 { get; set; } = "13:00";
-        [MaxLength(5)] public string SaturdayStart3 { get; set; }
-
-        [MaxLength(5)] public string SaturdayFinish1 { get; set; } = "12:00";
-        [MaxLength(5)] public string SaturdayFinish2 { get; set; } = "17:00";
-        [MaxLength(5)] public string SaturdayFinish3 { get; set; }
+        public string SaturdayTimes { get; set; } = DefaultTime;
 
         public bool Sunday { get; set; } = true;
-        [MaxLength(5)] public string SundayStart1 { get; set; } = "8:00";
-        [MaxLength(5)] public string SundayStart2 { get; set; } = "13:00";
-        [MaxLength(5)] public string SundayStart3 { get; set; }
-
-        [MaxLength(5)] public string SundayFinish1 { get; set; } = "12:00";
-        [MaxLength(5)] public string SundayFinish2 { get; set; } = "17:00";
-        [MaxLength(5)] public string SundayFinish3 { get; set; }
+        public string SundayTimes { get; set; } = DefaultTime;
 
         public bool Monday { get; set; } = true;
-        [MaxLength(5)] public string MondayStart1 { get; set; } = "8:00";
-        [MaxLength(5)] public string MondayStart2 { get; set; } = "13:00";
-        [MaxLength(5)] public string MondayStart3 { get; set; }
-
-        [MaxLength(5)] public string MondayFinish1 { get; set; } = "12:00";
-        [MaxLength(5)] public string MondayFinish2 { get; set; } = "17:00";
-        [MaxLength(5)] public string MondayFinish3 { get; set; }
-
+        public string MondayTimes { get; set; } = DefaultTime;
 
         public bool Tuesday { get; set; } = true;
-        [MaxLength(5)] public string TuesdayStart1 { get; set; } = "8:00";
-        [MaxLength(5)] public string TuesdayStart2 { get; set; } = "13:00";
-        [MaxLength(5)] public string TuesdayStart3 { get; set; }
-
-        [MaxLength(5)] public string TuesdayFinish1 { get; set; } = "12:00";
-        [MaxLength(5)] public string TuesdayFinish2 { get; set; } = "17:00";
-        [MaxLength(5)] public string TuesdayFinish3 { get; set; }
+        public string TuesdayTimes { get; set; } = DefaultTime;
 
         public bool Wednesday { get; set; } = true;
-        [MaxLength(5)] public string WednesdayStart1 { get; set; } = "8:00";
-        [MaxLength(5)] public string WednesdayStart2 { get; set; } = "13:00";
-        [MaxLength(5)] public string WednesdayStart3 { get; set; }
-
-        [MaxLength(5)] public string WednesdayFinish1 { get; set; } = "12:00";
-        [MaxLength(5)] public string WednesdayFinish2 { get; set; } = "17:00";
-        [MaxLength(5)] public string WednesdayFinish3 { get; set; }
+        public string WednesdayTimes { get; set; } = DefaultTime;
 
         public bool Thursday { get; set; } = true;
-        [MaxLength(5)] public string ThursdayStart1 { get; set; } = "8:00";
-        [MaxLength(5)] public string ThursdayStart2 { get; set; }
-        [MaxLength(5)] public string ThursdayStart3 { get; set; }
-
-        [MaxLength(5)] public string ThursdayFinish1 { get; set; } = "12:00";
-        [MaxLength(5)] public string ThursdayFinish2 { get; set; }
-        [MaxLength(5)] public string ThursdayFinish3 { get; set; }
+        public string ThursdayTimes { get; set; } = "8:00-12:00";
 
         public bool Friday { get; set; }
-        [MaxLength(5)] public string FridayStart1 { get; set; }
-        [MaxLength(5)] public string FridayStart2 { get; set; }
-        [MaxLength(5)] public string FridayStart3 { get; set; }
+        public string FridayTimes { get; set; }
 
-        [MaxLength(5)] public string FridayFinish1 { get; set; }
-        [MaxLength(5)] public string FridayFinish2 { get; set; }
-        [MaxLength(5)] public string FridayFinish3 { get; set; }
-
-        public string GetDayShiftStart(PersianDayOfWeek day, byte shift)
+        private string GetDayTimes(PersianDayOfWeek day)
         {
-
-            return GetType().GetProperty($"{Enum.GetName(day)}Start{shift}").GetValue(this, null)?.ToString() ?? "00:00";
+            return GetType().GetProperty($"{Enum.GetName(day)}Times").GetValue(this, null)?.ToString() ?? "";
         }
 
-        public string GetDayShiftFinish(PersianDayOfWeek day, byte shift)
+        public Dictionary<PersianDayOfWeek, WorkTimeRange[]> GetWorkTimeRanges()
         {
-            return GetType().GetProperty($"{Enum.GetName(typeof(PersianDayOfWeek), day)}Finish{shift}").GetValue(this, null)?.ToString() ?? "00:00";
-        }
+            var result = new Dictionary<PersianDayOfWeek, WorkTimeRange[]>();
 
-        public string[] DefaultCacheNames() => new[] { nameof(PersianCalendar) };
+            foreach (PersianDayOfWeek p in Enum.GetValues(typeof(PersianDayOfWeek)))
+            {
+                var times = GetDayTimes(p);
+
+                var ranges = new List<WorkTimeRange>();
+
+                if (!string.IsNullOrEmpty(times))
+                {
+                    var timesArray = times.Split(",").ToArray();
+
+                    for (int i = 0; i < timesArray.Length; i++)
+                    {
+                        ranges.Add(new WorkTimeRange(timesArray[i]));
+                    }
+                }
+
+                result.Add(p,ranges.ToArray());
+            }
+
+
+            return result;
+        }
     }
 }
