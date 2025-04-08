@@ -13,7 +13,7 @@ namespace GeneralServices.Calendars
         private uint _finish;
         private ushort _duration;
 
-        public CalendarDayRange(uint startValue, ushort duration, byte durationPercentage = 100)
+        public CalendarDayRange(uint startValue, ushort duration, int durationPercentage = 100)
         {
             _start = startValue;
             duration = (ushort)(duration * durationPercentage * 0.01);
@@ -32,7 +32,7 @@ namespace GeneralServices.Calendars
             _start += value;
             _finish += value;
         }
-    
+
     }
 
     public class PersianCalendarCore
@@ -45,27 +45,22 @@ namespace GeneralServices.Calendars
         }
 
         //Duration by minutes
-        public uint Duration(string start, string finish)
+        public int Duration(string start, string finish)
         {
             return Duration(start.ToPersianDateTime(), finish.ToPersianDateTime());
         }
 
-        public uint Duration(PersianDateTime start, PersianDateTime finish)
+        public int Duration(PersianDateTime start, PersianDateTime finish)
         {
             start = _calendarDistribution.CheckExtendAndSet(start);
-
-            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish,false);
             finish = _calendarDistribution.CheckExtendAndSet(finish);
 
-            
+            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish, false);
 
-            int startInt = start.ToShortDateInt();
-            int finishInt = finish.ToShortDateInt();
+            var startOfStart = _calendarDistribution[start].ValueOnStart;
+            var startOfFinish = _calendarDistribution[finish].ValueOnStart;
 
-            var startOfStart = _calendarDistribution[startInt].ValueOnStart;
-            var startOfFinish = _calendarDistribution[finishInt].ValueOnStart;
-
-            return startOfFinish - startOfStart + MinutesPassedFromThisDay(finish) - MinutesPassedFromThisDay(start);
+            return (int)( startOfFinish - startOfStart + MinutesPassedFromThisDay(finish) - MinutesPassedFromThisDay(start));
         }
 
         public double DurationByHour(PersianDateTime start, PersianDateTime finish)
@@ -76,15 +71,17 @@ namespace GeneralServices.Calendars
         public decimal Progress(PersianDateTime tDate, PersianDateTime start, PersianDateTime finish)
         {
             if (start > finish) return -1;
+            start = _calendarDistribution.CheckExtendAndSet(start);
+            finish = _calendarDistribution.CheckExtendAndSet(finish);
 
-            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish,false);
+            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish, false);
 
             if (tDate < start) return 0;
             if (tDate > finish) return 100;
             if (start == finish) return 100;
 
-            uint total = Duration(start, finish);
-            uint past = Duration(start, tDate);
+            int total = Duration(start, finish);
+            int past = Duration(start, tDate);
 
             if (total == 0) return 100;
 
@@ -112,7 +109,7 @@ namespace GeneralServices.Calendars
 
                 do
                 {
-                    if (_calendarDistribution[tDate.ToShortDateInt()].Duration > 0) days--;
+                    if (_calendarDistribution[tDate].Duration > 0) days--;
                     tDate = tDate.AddDays(1);
                 } while (days > 0);
 
@@ -130,10 +127,10 @@ namespace GeneralServices.Calendars
             return AddMinutes(time, 0);
         }
 
-        public PersianDateTime ExactWorkFinishTime(string date, bool forwardAvailable = true) => ExactWorkFinishTime(date.ToPersianDateTime(),forwardAvailable);
-        public PersianDateTime ExactWorkFinishTime(PersianDateTime date,bool forwardAvailable = true)
+        public PersianDateTime ExactWorkFinishTime(string date, bool forwardAvailable = true) => ExactWorkFinishTime(date.ToPersianDateTime(), forwardAvailable);
+        public PersianDateTime ExactWorkFinishTime(PersianDateTime date, bool forwardAvailable = true)
         {
-            var thisDayDuration = (uint)_calendarDistribution[date.ToShortDateInt()].Duration;
+            var thisDayDuration = (int)_calendarDistribution[date].Duration;
 
             PersianDateTime exactStart;
 
@@ -146,18 +143,18 @@ namespace GeneralServices.Calendars
                 var tDate = date;
 
                 while (tDate.ToShortDateInt() > _calendarDistribution.StartDateTime.ToShortDateInt()
-                       & _calendarDistribution[tDate.ToShortDateInt()].Duration == 0)
+                       & _calendarDistribution[tDate].Duration == 0)
                 {
                     tDate = tDate.AddDays(-1);
                 }
 
-                thisDayDuration = (uint)_calendarDistribution[tDate.ToShortDateInt()].Duration;
+                thisDayDuration = (int)_calendarDistribution[tDate].Duration;
                 exactStart = ExactWorkStartTime(tDate);
             }
 
             var passed = MinutesPassedFromThisDay(exactStart);
 
-            return AddMinutes(exactStart, thisDayDuration - passed);
+            return AddMinutes(exactStart, (int)(thisDayDuration - passed));
 
         }
 
@@ -167,13 +164,13 @@ namespace GeneralServices.Calendars
             PersianDateTime finish)
         {
             if (start > finish) return finish;
-            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish,false);
+            if (finish.Hour == 0 & finish.Minute == 0) finish = ExactWorkFinishTime(finish, false);
             if (progress == 0) return ExactWorkStartTime(start);
             if (progress == 100) return finish;
             if (start == finish) return ExactWorkStartTime(start);
 
-            uint totalTime = Duration(start, finish);
-            uint progressValueTime = (uint)(totalTime * progress / 100);
+            int totalTime = Duration(start, finish);
+            int progressValueTime = (int)(totalTime * progress / 100);
 
             return AddMinutes(start, progressValueTime);
         }
@@ -181,19 +178,38 @@ namespace GeneralServices.Calendars
         public PersianDateTime AddHours(string date, double hours) => AddHours(date.ToPersianDateTime(), hours);
         public PersianDateTime AddHours(PersianDateTime date, double hours)
         {
-            return AddMinutes(date, (uint)(hours * 60));
+            return AddMinutes(date, (int)(hours * 60));
         }
 
-        public PersianDateTime AddMinutes(string date, uint minutes) => AddMinutes(date.ToPersianDateTime(), minutes);
-        public PersianDateTime AddMinutes(PersianDateTime date, uint minutes)
+        public PersianDateTime AddMinutes(string date, int minutes) => AddMinutes(date.ToPersianDateTime(), minutes);
+        public PersianDateTime AddMinutes(PersianDateTime date, int minutes)
         {
-            uint remainPassed = minutes + MinutesPassedFromThisDay(date);
+            int remainPassed = minutes + (int)MinutesPassedFromThisDay(date);
+
             PersianDateTime tDate = date;
 
-            while (_calendarDistribution[tDate.ToShortDateInt()].Duration < remainPassed | _calendarDistribution[tDate.ToShortDateInt()].Duration == 0)
+            if (minutes >= 0)
             {
-                remainPassed -= (uint) _calendarDistribution[tDate.ToShortDateInt()].Duration;
-                tDate = tDate.AddDays(1);
+                while (_calendarDistribution[tDate].Duration < remainPassed |
+                       _calendarDistribution[tDate].Duration == 0)
+                {
+                    remainPassed -= _calendarDistribution[tDate].Duration;
+                    tDate = tDate.AddDays(1);
+                }
+            }
+            else
+            {
+                tDate = tDate.AddDays(-1);
+                remainPassed = Math.Abs(remainPassed);
+
+                while (_calendarDistribution[tDate].Duration < remainPassed |
+                       _calendarDistribution[tDate].Duration == 0)
+                {
+                    remainPassed -= _calendarDistribution[tDate.ToShortDateInt()].Duration;
+                    tDate = tDate.AddDays(-1);
+                }
+
+                remainPassed = _calendarDistribution[tDate].Duration - remainPassed;
             }
 
             var result = tDate.StartOfDay();
@@ -202,11 +218,11 @@ namespace GeneralServices.Calendars
             {
                 if (remainPassed > workRange.Duration)
                 {
-                    remainPassed -= (uint) workRange.Duration;
+                    remainPassed -= workRange.Duration;
                     continue;
                 }
 
-                var timeSpan = workRange.Start.Add(new TimeSpan(0, (int) remainPassed, 0));
+                var timeSpan = workRange.Start.Add(new TimeSpan(0, (int)remainPassed, 0));
 
                 result = result.Add(timeSpan);
                 break;

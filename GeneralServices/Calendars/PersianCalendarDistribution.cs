@@ -19,14 +19,14 @@ namespace GeneralServices.Calendars
         public PersianDateTime StartDateTime = PersianDateTime.Now;
         public PersianDateTime FinishDateTime = PersianDateTime.Now;
 
-        
 
-        public PersianCalendarDistribution(PersianCalendar calendar, List<CalendarHolidayViewModel> holidays, string start = null, string finish = null)
+
+        public PersianCalendarDistribution(PersianCalendar calendar, List<PersianCalendarHoliday> holidays, string start = null, string finish = null)
         {
             _weekTimeRanges = calendar.GetWorkTimeRanges();
 
             SetHolidays(holidays);
-            
+
             StartDateTime = string.IsNullOrEmpty(start)
                 ? PersianDateTime.Now.AddMonths(-1)
                 : start.ToPersianDateTime();
@@ -43,7 +43,7 @@ namespace GeneralServices.Calendars
 
         protected ushort GetDateDuration(PersianDateTime date)
         {
-            return (ushort)( _holidays.Contains(date.ToShortDateInt())
+            return (ushort)(_holidays.Contains(date.ToShortDateInt())
                 ?
                  0
                 :
@@ -59,7 +59,7 @@ namespace GeneralServices.Calendars
 
             do
             {
-                var newDay = new CalendarDayRange(startValue,GetDateDuration(tDate));
+                var newDay = new CalendarDayRange(startValue, GetDateDuration(tDate));
 
                 result.Add(tDate.ToShortDateInt(), newDay);
 
@@ -71,20 +71,23 @@ namespace GeneralServices.Calendars
             return result;
         }
 
-        private void SetHolidays(List<CalendarHolidayViewModel> holidays)
+        private void SetHolidays(List<PersianCalendarHoliday> holidays)
         {
             _holidays = new List<int>();
 
             foreach (var holiday in holidays)
             {
-                var tDate = holiday.StartHoliday;
+                var start = holiday.StartHolidayDate.ToPersianDateTime();
+                var finish = holiday.FinishHolidayDate.ToPersianDateTime();
+
+                var tDate = start;
 
                 do
                 {
                     _holidays.Add(tDate.ToShortDateInt());
                     tDate = tDate.AddDays(1);
 
-                } while (tDate <= holiday.FinishHoliday);
+                } while (tDate.ToShortDateInt() <= finish.ToShortDateInt());
             }
         }
 
@@ -96,6 +99,16 @@ namespace GeneralServices.Calendars
             get
             {
                 if (!_days.ContainsKey(dateValue)) Extend(PersianDateTime.Parse(dateValue));
+                return _days[dateValue];
+            }
+        }
+
+        public CalendarDayRange this[PersianDateTime date]
+        {
+            get
+            {
+                var dateValue = date.ToShortDateInt();
+                if (!_days.ContainsKey(dateValue)) Extend(date);
                 return _days[dateValue];
             }
         }

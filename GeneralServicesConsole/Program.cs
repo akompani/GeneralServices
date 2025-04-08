@@ -7,12 +7,11 @@ using MD.PersianDateTime;
 Console.WriteLine("Hello, World!");
 
 var calendar = new PersianCalendar();
-var holidays = new List<CalendarHolidayViewModel>()
+var holidays = new List<PersianCalendarHoliday>()
 {
-    new (new PersianDateTime(1404,1,1)
-    ,new PersianDateTime(1404,1,4)),
-    new (new PersianDateTime(1404,1,11)
-    ,new PersianDateTime(1404,1,13)),
+    new (0,"1403/12/29","1403/12/30"),
+    new (0, "1404/01/01","1404/01/04"),
+    new (0, "1404/01/11","1404/01/13"),
 };
 
 //var availableDates = new List<(string, string, byte)>();
@@ -32,12 +31,9 @@ EnterValues:
 
 Console.WriteLine("Enter start date :");
 var start = Console.ReadLine();
-Console.WriteLine("Enter finish date :");
-var finish = Console.ReadLine();
-Console.WriteLine("Duration By Minutes : " + calendarCore.Duration(start, finish));
-var progress = Convert.ToDecimal(Console.ReadLine());
-Console.WriteLine("Earn Date = " + calendarCore.EarnDate(progress,start,finish).FullDateTime());
-
+Console.WriteLine("Enter Duration :");
+int duration = Convert.ToInt32(Console.ReadLine());
+Console.WriteLine("Add Duration Time is : " + calendarCore.AddMinutes(start.ToPersianDateTime(), duration));
 
 goto EnterValues;
 //Console.WriteLine(calendarCore.Duration("1404/01/02 8:30","1404/01/05 16:30"));
