@@ -11,3 +11,16 @@ C:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.dll
 C:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\refint\GeneralServices.dll
 C:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.pdb
 C:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\ref\GeneralServices.dll
+D:\GITHUB\GeneralServices\GeneralServices\bin\Debug\net8.0\GeneralServices.deps.json
+D:\GITHUB\GeneralServices\GeneralServices\bin\Debug\net8.0\GeneralServices.dll
+D:\GITHUB\GeneralServices\GeneralServices\bin\Debug\net8.0\GeneralServices.pdb
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.csproj.AssemblyReference.cache
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.GeneratedMSBuildEditorConfig.editorconfig
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.AssemblyInfoInputs.cache
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.AssemblyInfo.cs
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.csproj.CoreCompileInputs.cache
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.sourcelink.json
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.dll
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\refint\GeneralServices.dll
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\GeneralServices.pdb
+D:\GITHUB\GeneralServices\GeneralServices\obj\Debug\net8.0\ref\GeneralServices.dll

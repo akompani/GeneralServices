@@ -14,7 +14,7 @@ namespace GeneralServices.FileServices
     public class FileService
     {
         public readonly bool IsLocal;
-        private readonly string LocalSubFolderAddress;
+        private readonly string _localSubFolderAddress;
 
         public readonly string[] UploadFolders;
 
@@ -22,7 +22,7 @@ namespace GeneralServices.FileServices
         {
             var fs = fileSetting.Value;
             IsLocal = fs.IsLocal;
-            LocalSubFolderAddress = fs.SubFolderAddress;
+            _localSubFolderAddress = fs.SubFolderAddress;
 
             UploadFolders = new string[] { "uploads" };
         }
@@ -45,7 +45,7 @@ namespace GeneralServices.FileServices
         {
             if (toLocalFolder && !IsLocal) return new GeneralServiceResponse(GeneralResponseStatus.Fail, "You request to upload file in local file but not in local mode.");
 
-            if (string.IsNullOrEmpty(folderName)) folderName = PathFromArrayFolders(UploadFolders);
+            if (folderName == null) folderName = PathFromArrayFolders(UploadFolders);
 
             string extension = Path.GetExtension(file.FileName).ToLower().Substring(1);
 
@@ -210,10 +210,9 @@ namespace GeneralServices.FileServices
             return path;
         }
 
-
-        private string SubFolderPath(bool localFolder)
+        public string SubFolderPath(bool localFolder)
         {
-            return localFolder ? LocalSubFolderAddress : Path.Combine("wwwroot", "uploads");
+            return localFolder ? _localSubFolderAddress : Path.Combine("wwwroot", "uploads");
         }
 
     }

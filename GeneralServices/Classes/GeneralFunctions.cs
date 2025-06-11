@@ -458,7 +458,7 @@ namespace GeneralService.Classes
 
             foreach (var factor in factors)
             {
-                var cStr = factor.ToString();
+                var cStr = factor?.ToString() ?? "1";
 
                 if (cStr != "1")
                 {

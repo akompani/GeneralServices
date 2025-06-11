@@ -33,7 +33,8 @@ namespace GeneralServices.Models
             Columns = new List<ImportSampleColumn>();
         }
 
-        public ImportSampleModel(string title, string sheetName, string importCheckUrl, string acceptImportUrl, string redirectUrl, bool defaultDeleteOld = true, long refId = 0)
+        public ImportSampleModel(string title, string sheetName, string importCheckUrl, string acceptImportUrl, string redirectUrl
+            , bool defaultDeleteOld = true, long refId = 0,string filePattern = "*.*")
         {
             Title = title;
             SheetName = sheetName;
@@ -44,6 +45,7 @@ namespace GeneralServices.Models
             AcceptImportUrl = acceptImportUrl;
             RedirectUrl = redirectUrl;
             RefId = refId;
+            FilePatterns = filePattern;
         }
 
         public string Title { get; set; }
@@ -59,7 +61,7 @@ namespace GeneralServices.Models
 
         public List<ImportSampleColumn> Columns { get; set; }
 
-
+        public string FilePatterns { get; set; }
 
     }
 }

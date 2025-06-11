@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj": {}
+    "D:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj": {}
   },
   "projects": {
-    "C:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj": {
+    "D:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj",
+        "projectUniqueName": "D:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj",
         "projectName": "GeneralServices",
-        "projectPath": "C:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj",
+        "projectPath": "D:\\GITHUB\\GeneralServices\\GeneralServices\\GeneralServices.csproj",
         "packagesPath": "C:\\Users\\Kompani-Home\\.nuget\\packages\\",
-        "outputPath": "C:\\GITHUB\\GeneralServices\\GeneralServices\\obj\\",
+        "outputPath": "D:\\GITHUB\\GeneralServices\\GeneralServices\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

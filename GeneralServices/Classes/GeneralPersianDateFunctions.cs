@@ -131,7 +131,7 @@ namespace GeneralService
         {
             var dt = GetMiladyDateFromPersian(persianDate);
 
-            return $"{dt.Year}/{dt.Month}/{dt.Day} {dt.Hour}:{dt.Minute}";
+            return dt.ToString("yyyy-MM-ddTHH:mm",CultureInfo.InvariantCulture);
         }
 
         public static DateTime GetMiladyDateFromPersian(this string persianDate)
