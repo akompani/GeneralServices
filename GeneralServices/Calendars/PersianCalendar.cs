@@ -12,6 +12,7 @@ namespace GeneralServices.Calendars
     {
         // 8:00 to 12:00 and 13:00 to 17:00
         private const string DefaultTime = "8:00-12:00,13:00-17:00";
+        private const string HalfDefaultTime = "8:00-12:00";
 
         [Key]
         public int Id { get; set; }
@@ -36,7 +37,7 @@ namespace GeneralServices.Calendars
         public string WednesdayTimes { get; set; } = DefaultTime;
 
         public bool Thursday { get; set; } = true;
-        public string ThursdayTimes { get; set; } = "8:00-12:00";
+        public string ThursdayTimes { get; set; } = HalfDefaultTime;
 
         public bool Friday { get; set; }
         public string FridayTimes { get; set; }

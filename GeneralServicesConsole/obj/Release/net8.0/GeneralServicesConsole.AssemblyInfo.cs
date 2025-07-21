@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GeneralServicesConsole")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bda08c5cc389d661ad2e8c7d4d8ef46c63fcfa42")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c76011bb4cd433dbf1e74fd9fe94d17582625947")]
 [assembly: System.Reflection.AssemblyProductAttribute("GeneralServicesConsole")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GeneralServicesConsole")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

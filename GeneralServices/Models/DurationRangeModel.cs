@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using GeneralService;
+﻿using System.Linq;
 using GeneralServices.Calendars;
 using MD.PersianDateTime;
 

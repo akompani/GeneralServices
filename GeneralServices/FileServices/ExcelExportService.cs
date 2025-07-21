@@ -6,7 +6,7 @@ using ClosedXML.Excel;
 
 namespace GeneralServices.FileServices
 {
-    
+
     public class ExcelExportService
     {
         private Dictionary<string, IXLStyle> _styles;
@@ -22,7 +22,7 @@ namespace GeneralServices.FileServices
             PriceCell = 4,
             PercentageCell = 5,
             SumPriceCell = 6,
-            FactorCell=7
+            FactorCell = 7
         }
 
         public ExcelExportService()
@@ -35,7 +35,20 @@ namespace GeneralServices.FileServices
             //Styles --------------------------------------------------------------------------
             _styles = new Dictionary<string, IXLStyle>();
 
-            //Normal Row ----------------------------------------------
+            //None Row ----------------------------------------------
+            var noneRow = XLWorkbook.DefaultStyle;
+            noneRow.Font.FontName = "B Mitra";
+            noneRow.Font.FontCharSet = XLFontCharSet.Arabic;
+            noneRow.Font.FontSize = 12;
+
+            noneRow.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            noneRow.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            noneRow.Alignment.WrapText = true;
+
+            _styles.Add("DEFAULT", noneRow);
+
+
+//Normal Row ----------------------------------------------
             var normalRow = XLWorkbook.DefaultStyle;
             normalRow.Font.FontName = "B Mitra";
             normalRow.Font.FontCharSet = XLFontCharSet.Arabic;
@@ -192,10 +205,10 @@ namespace GeneralServices.FileServices
             SetRangeStyle(cells, GetEnumStyleName(style));
         }
 
-        public void SetValueAndStyle(IXLWorksheet sheet, int row, int col, int count, object value,
-            string style, bool convert1ToNull = false, XLColor backgroundColor = null)
+        public void SetValueAndStyle(IXLWorksheet sheet, int row, int col, int rowCount, int colCount, object value,
+            string style, bool convert1ToNull = false, XLColor backgroundColor = null, bool forcedMerge = true)
         {
-            var range = sheet.Range(row, col, row, col + count - 1);
+            var range = sheet.Range(row, col, row + rowCount - 1, col + colCount - 1);
             if (convert1ToNull && value.ToString() == "1")
             {
                 range.Value = "";
@@ -207,29 +220,30 @@ namespace GeneralServices.FileServices
 
             if (backgroundColor != null) range.Style.Fill.BackgroundColor = backgroundColor;
 
-            if (count > 1) range.Merge();
+            if ((colCount > 1 | rowCount > 1) & forcedMerge) range.Merge();
             SetRangeStyle(range, style);
         }
 
-        public void SetValueAndStyle(IXLWorksheet sheet, int row, int col, int count, object value,
-                  MyStyles style = MyStyles.NormalRow, bool convert1ToNull = false, XLColor backgroundColor = null)
+        public void SetValueAndStyle(IXLWorksheet sheet, int row, int col, int rowCount, int colCount, object value,
+                  MyStyles style = MyStyles.NormalRow, bool convert1ToNull = false, XLColor backgroundColor = null, bool forcedMerge = true)
         {
-            SetValueAndStyle(sheet, row, col, count, value,GetEnumStyleName(style), convert1ToNull, backgroundColor);
+            SetValueAndStyle(sheet, row, col, rowCount, colCount, value, GetEnumStyleName(style), convert1ToNull, backgroundColor, forcedMerge);
         }
 
-        public void SetFormulaAndStyle(IXLWorksheet sheet, int row, int col, int count, string formula,
-            string style)
+        public void SetFormulaAndStyle(IXLWorksheet sheet, int row, int col, int rowCount, int colCount, string formula,
+            string style, bool forcedMerge = true)
         {
-            var range = sheet.Range(row, col, row, col + count - 1);
-            range.FormulaA1 = formula;
-            if (count > 1) range.Merge();
+            sheet.Cell(row, col).FormulaA1 = formula;
+
+            var range = sheet.Range(row, col, row + rowCount - 1, col + colCount - 1);
+            if ((rowCount > 1 | colCount > 1) & forcedMerge) range.Merge();
             SetRangeStyle(range, style);
         }
 
-        public void SetFormulaAndStyle(IXLWorksheet sheet, int row, int col, int count, string formula,
-            MyStyles style = MyStyles.NormalRow)
+        public void SetFormulaAndStyle(IXLWorksheet sheet, int row, int col, int rowCount, int colCount, string formula,
+            MyStyles style = MyStyles.NormalRow, bool forcedMerge = true)
         {
-            SetFormulaAndStyle(sheet,row,col,count,formula,GetEnumStyleName(style));
+            SetFormulaAndStyle(sheet, row, col, rowCount, colCount, formula, GetEnumStyleName(style), forcedMerge);
         }
 
         public virtual void SetSheetFooter(IXLWorksheet sheet)
@@ -249,7 +263,7 @@ namespace GeneralServices.FileServices
             sheet.PageSetup.PrintAreas.Add(rng.RangeAddress.ToStringFixed());
             sheet.SheetView.View = XLSheetViewOptions.PageBreakPreview;
             sheet.SheetView.ZoomScale = 100;
-            sheet.PageSetup.FitToPages(1,0);
+            sheet.PageSetup.FitToPages(1, 0);
         }
 
         public static string StandardSheetName(string sheetName)
@@ -264,5 +278,37 @@ namespace GeneralServices.FileServices
             return result;
         }
 
+        public static void SetCellBorder(IXLWorksheet sheet, int row, int col, string type, XLBorderStyleValues style,XLColor color  )
+        {
+            var cell = sheet.Cell(row, col);
+
+            switch (type.ToUpper())
+            {
+                case "TOP":
+                    cell.Style.Border.SetTopBorder(style);
+                    cell.Style.Border.SetTopBorderColor(color);
+                    break;
+
+                case "BOTTOM":
+                    cell.Style.Border.SetBottomBorder(style);
+                    cell.Style.Border.SetBottomBorderColor(color);
+                    break;
+
+                case "LEFT":
+                    cell.Style.Border.SetLeftBorder(style);
+                    cell.Style.Border.SetLeftBorderColor(color);
+                    break;
+
+                case "RIGHT":
+                    cell.Style.Border.SetRightBorder(style);
+                    cell.Style.Border.SetRightBorderColor(color);
+                    break;
+
+                default:
+                    break;
+            }
+
+
+        }
     }
 }

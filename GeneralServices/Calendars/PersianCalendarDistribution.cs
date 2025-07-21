@@ -1,13 +1,6 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using GeneralService;
-using MD.PersianDateTime;
-using System;
+﻿using MD.PersianDateTime;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GeneralServices.Calendars
 {
